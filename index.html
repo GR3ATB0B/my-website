@@ -123,9 +123,120 @@
 
   footer { text-align: center; font-size: 12.5px; font-weight: 500; margin-top: 34px; color: #333; }
   footer a { color: var(--ink); font-weight: 700; }
+
+  /* ---- Birthday popup (for one specific friend) ---- */
+  .bday-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    background: rgba(0,0,0,.45);
+    animation: bdayFade .2s ease both;
+  }
+  .bday-overlay[hidden] { display: none; }
+  @keyframes bdayFade { from { opacity: 0; } to { opacity: 1; } }
+  .bday-card {
+    position: relative;
+    width: 100%; max-width: 400px;
+    background: var(--paper);
+    border: var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 26px 22px 24px;
+    transform: rotate(-1deg);
+    animation: bdayPop .4s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes bdayPop {
+    from { opacity: 0; transform: translateY(14px) rotate(-1deg) scale(.96); }
+    to   { opacity: 1; transform: rotate(-1deg); }
+  }
+  .bday-card h2 {
+    font-family: "Archivo Black", sans-serif;
+    font-size: clamp(22px, 6vw, 28px);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: -.5px;
+    margin-bottom: 12px;
+  }
+  .bday-card p { font-weight: 500; font-size: 15px; line-height: 1.45; margin-bottom: 16px; }
+  .bday-card .accent { display: inline-block; background: var(--yellow); border: var(--border); border-radius: 6px; padding: 0 6px; transform: rotate(-1.5deg); }
+  .bday-input {
+    width: 100%;
+    font-family: "DM Sans", sans-serif;
+    font-size: 16px; font-weight: 700;
+    padding: 12px 14px;
+    border: var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    background: var(--bg);
+    margin-bottom: 14px;
+  }
+  .bday-input:focus { outline: none; background: var(--mint); }
+  .bday-btn {
+    display: inline-block; width: 100%;
+    font-family: "Archivo Black", sans-serif;
+    font-size: 15px; text-transform: uppercase; letter-spacing: .5px;
+    cursor: pointer;
+    color: var(--ink);
+    background: var(--lime);
+    border: var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    padding: 13px 16px;
+    transition: transform .1s, box-shadow .1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bday-btn:hover:not(:disabled) { transform: translate(3px,3px); box-shadow: 0 0 0 0 var(--ink); }
+  .bday-btn:disabled { opacity: .45; cursor: not-allowed; }
+  .bday-btn.wish { background: var(--pink); }
+  .bday-link { display: inline-block; margin-top: 12px; font-weight: 700; font-size: 13px; background: none; border: none; cursor: pointer; text-decoration: underline; color: var(--ink); padding: 0; }
+  .bday-close {
+    position: absolute; top: -14px; right: -14px;
+    width: 34px; height: 34px;
+    font-size: 18px; font-weight: 900; line-height: 1;
+    cursor: pointer;
+    background: var(--orange);
+    border: var(--border); border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bday-close:hover { transform: translate(2px,2px); box-shadow: 0 0 0 0 var(--ink); }
+  .bday-confetti { position: fixed; top: -10vh; font-size: 26px; z-index: 101; pointer-events: none; will-change: transform; animation: bdayFall linear forwards; }
+  @keyframes bdayFall { to { transform: translateY(120vh) rotate(540deg); } }
 </style>
 </head>
 <body>
+
+<div class="bday-overlay" id="bdayOverlay" role="dialog" aria-modal="true" aria-labelledby="bdayTitle" hidden>
+  <div class="bday-card">
+    <button class="bday-close" id="bdayClose" aria-label="Close">✕</button>
+
+    <div data-stage="gate">
+      <h2 id="bdayTitle">🎂 It's my birthday!</h2>
+      <p>This little pop-up is for one specific friend. Who's wishing?</p>
+      <input class="bday-input" id="bdayName" type="text" placeholder="your name" autocomplete="off" autocapitalize="words" aria-label="Your name">
+      <button class="bday-btn" id="bdayGo" disabled>Continue →</button>
+    </div>
+
+    <div data-stage="notAlex" hidden>
+      <h2>Aw, thanks! 🙂</h2>
+      <p>Really nice of you to stop by — but this pop-up is saved for my friend <span class="accent">Alex</span>. Have a look around the site!</p>
+      <button class="bday-btn" id="bdayBack">← try again</button>
+      <button class="bday-link" data-close>no thanks, close</button>
+    </div>
+
+    <div data-stage="celebrate" hidden>
+      <h2>Hey Alex! 🎉</h2>
+      <p>You're exactly who I hoped would drop by. Hit the button and make my day.</p>
+      <button class="bday-btn wish" id="bdayWish">🎉 Wish Nash a Happy Birthday</button>
+    </div>
+
+    <div data-stage="wished" hidden>
+      <h2>🎈🎂🎈</h2>
+      <p>Wish received from <span class="accent">Alex</span> — that genuinely made my day. Thank you! 💚</p>
+      <button class="bday-btn" data-close>🍌 close</button>
+    </div>
+  </div>
+</div>
 
 <div class="board">
   <header>
@@ -163,6 +274,75 @@
   document.getElementById("hobbies").innerHTML = HOBBIES
     .map(([slug, emoji, name]) => `<a class="tile" href="/hobbies/${slug}.html"><span class="emoji">${emoji}</span>${name}</a>`)
     .join("");
+</script>
+
+<script>
+  // Birthday pop-up — anyone can open it, but only Alex can leave the wish.
+  (function () {
+    const INVITED = "alex";              // the one friend who can wish (case-insensitive)
+    const overlay = document.getElementById("bdayOverlay");
+    if (!overlay) return;
+
+    const card = overlay.querySelector(".bday-card");
+    const nameInput = document.getElementById("bdayName");
+    const goBtn = document.getElementById("bdayGo");
+
+    const stages = {};
+    overlay.querySelectorAll("[data-stage]").forEach(el => { stages[el.dataset.stage] = el; });
+
+    function show(stage) {
+      Object.values(stages).forEach(el => { el.hidden = true; });
+      stages[stage].hidden = false;
+    }
+
+    function open() { overlay.hidden = false; show("gate"); setTimeout(() => nameInput.focus(), 250); }
+    function close() { overlay.hidden = true; }
+
+    function isAlex() {
+      return nameInput.value.trim().toLowerCase() === INVITED;
+    }
+
+    nameInput.addEventListener("input", () => { goBtn.disabled = nameInput.value.trim() === ""; });
+    nameInput.addEventListener("keydown", e => { if (e.key === "Enter" && !goBtn.disabled) goBtn.click(); });
+
+    goBtn.addEventListener("click", () => { show(isAlex() ? "celebrate" : "notAlex"); });
+
+    document.getElementById("bdayBack").addEventListener("click", () => {
+      nameInput.value = ""; goBtn.disabled = true; show("gate"); nameInput.focus();
+    });
+
+    document.getElementById("bdayWish").addEventListener("click", () => {
+      show("wished");
+      confetti();
+      try { localStorage.setItem("nashBdayWished", "1"); } catch (e) {}
+    });
+
+    // Close controls
+    document.getElementById("bdayClose").addEventListener("click", close);
+    overlay.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", close));
+    overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !overlay.hidden) close(); });
+
+    function confetti() {
+      const bits = ["🎉","🎂","🎈","🍌","✨","🎊","💚","🥳"];
+      for (let i = 0; i < 40; i++) {
+        const s = document.createElement("span");
+        s.className = "bday-confetti";
+        s.textContent = bits[i % bits.length];
+        s.style.left = Math.random() * 100 + "vw";
+        s.style.animationDuration = (2 + Math.random() * 2.5) + "s";
+        s.style.animationDelay = (Math.random() * 0.6) + "s";
+        s.style.fontSize = (18 + Math.random() * 22) + "px";
+        document.body.appendChild(s);
+        s.addEventListener("animationend", () => s.remove());
+      }
+    }
+
+    // Show on load unless Alex already wished on this device.
+    let alreadyWished = false;
+    try { alreadyWished = localStorage.getItem("nashBdayWished") === "1"; } catch (e) {}
+    if (!alreadyWished) open();
+  })();
 </script>
 </body>
 </html>
